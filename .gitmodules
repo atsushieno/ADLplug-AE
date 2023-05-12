@@ -1,0 +1,9 @@
+[submodule "external/ADLplug"]
+	path = external/ADLplug
+	url = https://github.com/jpcima/ADLplug.git
+[submodule "external/JUCE"]
+	path = external/JUCE
+	url = https://github.com/juce-framework/JUCE.git
+[submodule "external/clap-juce-extensions"]
+	path = external/clap-juce-extensions
+	url = https://github.com/free-audio/clap-juce-extensions.git
