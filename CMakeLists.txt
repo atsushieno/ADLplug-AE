@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 
+project(ADLplug-AE VERSION 0.0.1)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -22,7 +24,6 @@ target_compile_definitions(OPNMIDI_static PRIVATE "OPNMIDI_EXPORT=")
 target_compile_definitions(OPNMIDI_static PUBLIC "OPNMIDI_UNSTABLE_API=")
 ### end of copy
 
-set(ADLplug_CHIP "OPL3" CACHE STRING "Kind of synthesizer chip (OPL3, OPN2)")
 
 if(ADLplug_RT_CHECKER)
     add_definitions("-DADLplug_RT_CHECKER=1")
@@ -33,28 +34,50 @@ if(ADLplug_ASSERTIONS)
     add_definitions("-UNDEBUG")
 endif()
 
+# deps
 
-
-if (ADLplug_CHIP STREQUAL "OPN2")
-    set (ADLAE_PLUGIN_NAME "OPNplug-AE")
-    set (ADLAE_PLUGIN_CODE "OPNA")
-elseif(ADLplug_CHIP STREQUAL "OPL3")
-    set (ADLAE_PLUGIN_NAME "ADLplug-AE")
-    set (ADLAE_PLUGIN_CODE "ADLA")
+if(ADLplug_USE_SYSTEM_FMT)
+    find_package(fmt 5.0.0)
+    if(NOT fmt_FOUND)
+        message(FATAL_ERROR "Unable to find fmt 5.x on system.")
+    endif()
+    add_library(ADLplug_fmt INTERFACE)
+    target_compile_definitions(ADLplug_fmt INTERFACE "FMT_USE_USER_DEFINED_LITERALS=0")
+    target_link_libraries(ADLplug_fmt INTERFACE fmt)
 else()
-    message(FATAL_ERROR "unsupported chip ${ADLplug_CHIP}")
-endif ()
+    add_library(ADLplug_fmt STATIC
+            "external/ADLplug/thirdparty/fmt/src/format.cc"
+            "external/ADLplug/thirdparty/fmt/src/posix.cc")
+    target_include_directories(ADLplug_fmt PUBLIC "external/ADLplug/thirdparty/fmt/include")
+    target_compile_definitions(ADLplug_fmt PUBLIC "FMT_USE_USER_DEFINED_LITERALS=0")
+    set_property(TARGET ADLplug_fmt PROPERTY POSITION_INDEPENDENT_CODE ON)
+endif()
 
-set (BaseTargetName ${ADLAE_PLUGIN_NAME})
+add_library(simple-ini STATIC "external/ADLplug/thirdparty/simpleini/ConvertUTF.cpp")
+target_include_directories(simple-ini INTERFACE "external/ADLplug/thirdparty/simpleini")
 
-project(${BaseTargetName} VERSION 0.0.1)
+add_library(wopl STATIC "external/ADLplug/thirdparty/wopl/wopl/wopl_file.c")
+target_include_directories(wopl PUBLIC "thirdparty/wopl")
+set_property(TARGET wopl PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+add_library(wopn STATIC "external/ADLplug/thirdparty/wopn/wopn/wopn_file.c")
+target_include_directories(wopn PUBLIC "thirdparty/wopn")
+set_property(TARGET wopn PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 add_subdirectory(external/JUCE)
 add_subdirectory(external/clap-juce-extensions EXCLUDE_FROM_ALL)
 
+
+
+# common build fragment using macro
+
+function(ADLAE_ADD_PLUGIN BaseTargetName ADLplug_CHIP)
+
+message("Building Plugin: ${BaseTargetName} ...")
+
 juce_add_plugin("${BaseTargetName}"
-        # ICON_BIG ...                              # ICON_* arguments specify a path to an image file to use as an icon for the Standalone
-        # ICON_SMALL ...
+        ICON_BIG ${ADLAE_ICON_BIG}
+        ICON_SMALL ${ADLAE_ICON_SMALL}
         COMPANY_NAME "Atsushi Eno"
         IS_SYNTH TRUE
         NEEDS_MIDI_INPUT TRUE
@@ -65,13 +88,35 @@ juce_add_plugin("${BaseTargetName}"
         PLUGIN_MANUFACTURER_CODE AENO
         PLUGIN_CODE ${ADLAE_PLUGIN_CODE}
         FORMATS AU VST3 LV2 Standalone
+        LV2URI ${ADLAE_LV2_URI}
         PRODUCT_NAME ${ADLAE_PLUGIN_NAME})
 
 clap_juce_extensions_plugin(TARGET ${BaseTargetName}
-        CLAP_ID "dev.atsushieno.ports.adlplug"
+        CLAP_ID ${ADLAE_CLAP_ID}
         CLAP_FEATURES instrument)
 
-target_sources(${BaseTargetName} PRIVATE
+## deps
+
+target_link_libraries(${BaseTargetName} PUBLIC ADLplug_fmt)
+target_link_libraries(${BaseTargetName} PUBLIC simple-ini)
+target_include_directories(${BaseTargetName} PUBLIC "external/ADLplug/thirdparty/folly")
+
+## JUCE stuff
+
+target_compile_definitions(${BaseTargetName}
+        PUBLIC
+        JUCE_WEB_BROWSER=0
+        JUCE_USE_CURL=0
+        JUCE_VST3_CAN_REPLACE_VST2=0)
+
+target_link_libraries(${BaseTargetName} PRIVATE
+        juce_audio_utils
+        juce_recommended_config_flags
+        juce_recommended_lto_flags
+        juce_recommended_warning_flags)
+
+target_sources(${BaseTargetName}
+        PRIVATE
         external/ADLplug/sources/bank_manager.cc
         external/ADLplug/sources/configuration.cc
         #external/ADLplug/sources/jack_main.cc
@@ -101,20 +146,23 @@ target_sources(${BaseTargetName} PRIVATE
         external/ADLplug/sources/utility/pak.cc
         external/ADLplug/sources/utility/rt_checker.cc
         external/ADLplug/sources/utility/simple_fifo.cc
-        external/ADLplug/sources/worker.cc)
+        external/ADLplug/sources/worker.cc
+        )
 
 target_include_directories(${BaseTargetName}
         PRIVATE
         external/ADLplug/sources
         )
 
-if (ADLplug_CHIP STREQUAL "OPL3")
+juce_generate_juce_header(${BaseTargetName})
+
+# chip-specifics (had to specify here after all...)
+
+if (${ADLplug_CHIP} STREQUAL "OPL3")
+    ## OPL3 specifics
 
     target_compile_definitions(${BaseTargetName} PUBLIC "ADLPLUG_OPL3")
 
-    add_library(wopl STATIC "external/ADLplug/thirdparty/wopl/wopl/wopl_file.c")
-    target_include_directories(wopl PUBLIC "thirdparty/wopl")
-    set_property(TARGET wopl PROPERTY POSITION_INDEPENDENT_CODE ON)
     target_link_libraries(${BaseTargetName} PUBLIC wopl)
 
     target_link_libraries(${BaseTargetName} PUBLIC ADLMIDI_static)
@@ -145,13 +193,11 @@ if (ADLplug_CHIP STREQUAL "OPL3")
             ADLPLUG_OPL3=1
             )
 
-else()
+elseif (${ADLplug_CHIP} STREQUAL "OPN2")
+    ## OPNplug specifics
 
     target_compile_definitions(${BaseTargetName} PUBLIC "ADLPLUG_OPN2")
 
-    add_library(wopn STATIC "external/ADLplug/thirdparty/wopn/wopn/wopn_file.c")
-    target_include_directories(wopn PUBLIC "thirdparty/wopn")
-    set_property(TARGET wopn PROPERTY POSITION_INDEPENDENT_CODE ON)
     target_link_libraries(${BaseTargetName} PUBLIC wopn)
 
     target_link_libraries(${BaseTargetName} PUBLIC OPNMIDI_static)
@@ -170,59 +216,47 @@ else()
             external/ADLplug/sources/opn2/adl/measurer/chips/mame/mame_ym2612fm.cpp
             external/ADLplug/sources/opn2/adl/measurer/chips/mame_opn2.cpp
             external/ADLplug/sources/opn2/adl/measurer/measurer.cpp
-    )
+            )
     target_include_directories(${BaseTargetName}
             PRIVATE
             external/ADLplug/sources/opn2
             external/ADLplug/thirdparty/libOPNMIDI/include
             external/ADLplug/thirdparty/wopn
-    )
+            )
     target_compile_definitions(${BaseTargetName}
             PUBLIC
             ADLPLUG_OPN2=1
-    )
-
-endif ()
-
-
-if(ADLplug_USE_SYSTEM_FMT)
-    find_package(fmt 5.0.0)
-    if(NOT fmt_FOUND)
-        message(FATAL_ERROR "Unable to find fmt 5.x on system.")
-    endif()
-    add_library(ADLplug_fmt INTERFACE)
-    target_compile_definitions(ADLplug_fmt INTERFACE "FMT_USE_USER_DEFINED_LITERALS=0")
-    target_link_libraries(ADLplug_fmt INTERFACE fmt)
-else()
-    add_library(ADLplug_fmt STATIC
-            "external/ADLplug/thirdparty/fmt/src/format.cc"
-            "external/ADLplug/thirdparty/fmt/src/posix.cc")
-    target_include_directories(ADLplug_fmt PUBLIC "external/ADLplug/thirdparty/fmt/include")
-    target_compile_definitions(ADLplug_fmt PUBLIC "FMT_USE_USER_DEFINED_LITERALS=0")
-    set_property(TARGET ADLplug_fmt PROPERTY POSITION_INDEPENDENT_CODE ON)
+            )
+else ()
+    message(FATAL_ERROR "unsupported chip ${ADLplug_CHIP}")
 endif()
-target_link_libraries(${BaseTargetName} PUBLIC ADLplug_fmt)
 
-add_library(simple-ini STATIC "external/ADLplug/thirdparty/simpleini/ConvertUTF.cpp")
-target_include_directories(simple-ini INTERFACE "external/ADLplug/thirdparty/simpleini")
+endfunction()
 
-target_link_libraries(${BaseTargetName} PUBLIC simple-ini)
-
-target_include_directories(${BaseTargetName} PUBLIC "external/ADLplug/thirdparty/folly")
+# end of common stuff
 
 
+# build ADLplug (OPL3)
 
-target_compile_definitions(${BaseTargetName}
-        PUBLIC
-        JUCE_WEB_BROWSER=0
-        JUCE_USE_CURL=0
-        JUCE_VST3_CAN_REPLACE_VST2=0)
+set(ADLAE_PLUGIN_NAME "ADLplug-AE")
+set(ADLAE_PLUGIN_CODE "ADLA")
+set(ADLAE_ICON_BIG "external/ADLplug/resources/application/ADLplug-96.png")
+set(ADLAE_ICON_SMALL "external/ADLplug/resources/application/ADLplug-32.png")
+set(ADLAE_LV2_URI "https://github.com/atsushieno/ADLplug-AE?chip=OPL3")
+set(ADLAE_CLAP_ID "dev.atsushieno.ports.adlplug")
+set(BaseTargetName ${ADLAE_PLUGIN_NAME})
 
-target_link_libraries(${BaseTargetName} PRIVATE
-        #shared_plugin_helpers
-        juce_audio_utils
-        juce_recommended_config_flags
-        juce_recommended_lto_flags
-        juce_recommended_warning_flags)
+ADLAE_ADD_PLUGIN("ADLplug-AE" "OPL3")
 
-juce_generate_juce_header(${BaseTargetName})
+
+# build OPNplug (OPN2)
+
+set(ADLAE_PLUGIN_NAME "OPNplug-AE")
+set(ADLAE_PLUGIN_CODE "OPNA")
+set(ADLAE_ICON_BIG "external/ADLplug/resources/application/OPNplug-96.png")
+set(ADLAE_ICON_SMALL "external/ADLplug/resources/application/OPNplug-32.png")
+set(ADLAE_LV2_URI "https://github.com/atsushieno/ADLplug-AE?chip=OPN2")
+set(ADLAE_CLAP_ID "dev.atsushieno.ports.opnplug")
+set(BaseTargetName ${ADLAE_PLUGIN_NAME})
+
+ADLAE_ADD_PLUGIN("OPNplug-AE" "OPN2")
