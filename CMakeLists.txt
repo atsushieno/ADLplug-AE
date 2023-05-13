@@ -87,7 +87,7 @@ juce_add_plugin("${BaseTargetName}"
         COPY_PLUGIN_AFTER_BUILD TRUE
         PLUGIN_MANUFACTURER_CODE AENO
         PLUGIN_CODE ${ADLAE_PLUGIN_CODE}
-        FORMATS AU VST3 LV2 Standalone
+        FORMATS AU AUv3 VST3 LV2 Standalone
         LV2URI ${ADLAE_LV2_URI}
         PRODUCT_NAME ${ADLAE_PLUGIN_NAME})
 
