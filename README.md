@@ -16,6 +16,23 @@ Everything else is left as is, so far.
 
 Everything is still subject to changes. Do not expect it as a stable synth plugin yet.
 
+## Building
+
+This repository keeps changes to the dependencies as minimum as possible.
+We do not make changes into a fork branch, but has just a `.patch` file to ADLplug.
+
+After checking out from this git repository, run the following commands:
+
+```
+git submodule update --init --recursive # in case you did not
+cd external/ADLplug
+pach -i ../../adlplug-ae.patch -p1
+cd ../..
+cmake -B build # or any name instead of `build`
+cmake --build build # ditto
+```
+
+... and the build artifacts would show up under `build` (or whatever you specified). The build artifacts would be dependent on each platform.
 
 ## LICENSES
 
