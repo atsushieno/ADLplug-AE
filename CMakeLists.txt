@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 
-project(ADLplug-AE VERSION 0.0.1)
+project(ADLplug-AE VERSION 0.0.2)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -79,6 +79,7 @@ juce_add_plugin("${BaseTargetName}"
         ICON_BIG ${ADLAE_ICON_BIG}
         ICON_SMALL ${ADLAE_ICON_SMALL}
         COMPANY_NAME "Atsushi Eno"
+        BUNDLE_ID "atsushieno"
         IS_SYNTH TRUE
         NEEDS_MIDI_INPUT TRUE
         NEEDS_MIDI_OUTPUT FALSE

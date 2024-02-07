@@ -6,7 +6,7 @@ ADLplug-AE is a modernized builds of [jpcima/ADLplug](https://github.com/jpcima/
 
 - based on JUCE7.
 - revamped CMake build script so that we can easily integrate others'
-  JUCE efforts that works with the official JUCE CMake scripts.
+  JUCE efforts that work well with the official JUCE CMake scripts.
   - supports LV2 in JUCE7 way (uses LV2 Patch and Atom for parameters)
   - supports CLAP build.
 - eliminated modal dialogs for Android (for Standalone and AAP plugin).
