@@ -21,12 +21,14 @@ Everything is still subject to changes. Do not expect it as a stable synth plugi
 This repository keeps changes to the dependencies as minimum as possible.
 We do not make changes into a fork branch, but has just a `.patch` file to ADLplug.
 
+Note: This repository should be checked out on it's own, do not use with an existing ADLplug clone.
+
 After checking out from this git repository, run the following commands:
 
 ```
 git submodule update --init --recursive # in case you did not
 cd external/ADLplug
-pach -i ../../adlplug-ae.patch -p1
+patch -i ../../adlplug-ae.patch -p1
 cd ../..
 cmake -B build # or any name instead of `build`
 cmake --build build # ditto
