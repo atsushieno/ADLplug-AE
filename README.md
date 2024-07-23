@@ -26,7 +26,7 @@ After checking out from this git repository, run the following commands:
 ```
 git submodule update --init --recursive # in case you did not
 cd external/ADLplug
-pach -i ../../adlplug-ae.patch -p1
+patch -i ../../adlplug-ae.patch -p1
 cd ../..
 cmake -B build # or any name instead of `build`
 cmake --build build # ditto
