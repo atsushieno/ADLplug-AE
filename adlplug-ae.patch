@@ -38,6 +38,66 @@ index 7105b40..691dfba 100644
          //[/UserButtonCode_btn_emulator]
      }
      else if (buttonThatWasClicked == btn_algo_help.get())
+diff --git a/sources/parameter_block.h b/sources/parameter_block.h
+index 7065061..46e7222 100644
+--- a/sources/parameter_block.h
++++ b/sources/parameter_block.h
+@@ -12,13 +12,13 @@
+ 
+ struct Basic_Parameter_Block {
+     template <AudioParameterType Ty, class... Arg>
+-    TypedAudioParameter<Ty> *add_automatable_parameter(AudioProcessorEx &p, int tag, Arg &&... args);
++    TypedAudioParameter<Ty> *add_automatable_parameter(AudioProcessorEx &p, int tag, String name, Arg &&... args);
+ 
+     template <AudioParameterType Ty, class... Arg>
+-    TypedAudioParameter<Ty> *add_parameter(AudioProcessorEx &p, int tag, Arg &&... args);
++    TypedAudioParameter<Ty> *add_parameter(AudioProcessorEx &p, int tag, String name, Arg &&... args);
+ 
+     template <AudioParameterType Ty, class... Arg>
+-    TypedAudioParameter<Ty> *add_internal_parameter(AudioProcessorEx &p, int tag, Arg &&... args);
++    TypedAudioParameter<Ty> *add_internal_parameter(AudioProcessorEx &p, int tag, String name, Arg &&... args);
+ 
+     int external_parameter_tag(unsigned parameter_index) const
+         { return tag_of_external_parameter_[parameter_index]; }
+diff --git a/sources/parameter_block.tcc b/sources/parameter_block.tcc
+index a892a1b..8c7330b 100644
+--- a/sources/parameter_block.tcc
++++ b/sources/parameter_block.tcc
+@@ -6,26 +6,28 @@
+ #include "parameter_block.h"
+ #include <utility>
+ 
++#define VERSION_HINT_OFFSET 1024
++
+ template <AudioParameterType Ty, class... Arg>
+-inline TypedAudioParameter<Ty> *Basic_Parameter_Block::add_automatable_parameter(AudioProcessorEx &p, int tag, Arg &&... args)
++inline TypedAudioParameter<Ty> *Basic_Parameter_Block::add_automatable_parameter(AudioProcessorEx &p, int tag, String name, Arg &&... args)
+ {
+-    TypedAudioParameter<Ty> *par = do_add_parameter<TypedAudioParameter<Ty>>(p, tag, std::forward<Arg>(args)...);
++    TypedAudioParameter<Ty> *par = do_add_parameter<TypedAudioParameter<Ty>>(p, tag, ParameterID(name, VERSION_HINT_OFFSET + tag), std::forward<Arg>(args)...);
+     par->setAutomatable(true);
+     return par;
+ }
+ 
+ template <AudioParameterType Ty, class... Arg>
+-inline TypedAudioParameter<Ty> *Basic_Parameter_Block::add_parameter(AudioProcessorEx &p, int tag, Arg &&... args)
++inline TypedAudioParameter<Ty> *Basic_Parameter_Block::add_parameter(AudioProcessorEx &p, int tag, String name, Arg &&... args)
+ {
+-    TypedAudioParameter<Ty> *par = do_add_parameter<TypedAudioParameter<Ty>>(p, tag, std::forward<Arg>(args)...);
++    TypedAudioParameter<Ty> *par = do_add_parameter<TypedAudioParameter<Ty>>(p, tag, ParameterID(name, VERSION_HINT_OFFSET + tag), std::forward<Arg>(args)...);
+     par->setAutomatable(false);
+     return par;
+ }
+ 
+ template <AudioParameterType Ty, class... Arg>
+-inline TypedAudioParameter<Ty> *Basic_Parameter_Block::add_internal_parameter(AudioProcessorEx &p, int tag, Arg &&... args)
++inline TypedAudioParameter<Ty> *Basic_Parameter_Block::add_internal_parameter(AudioProcessorEx &p, int tag, String name, Arg &&... args)
+ {
+-    TypedAudioParameter<Ty> *par = do_add_internal_parameter<TypedAudioParameter<Ty>>(p, tag, std::forward<Arg>(args)...);
++    TypedAudioParameter<Ty> *par = do_add_internal_parameter<TypedAudioParameter<Ty>>(p, tag, ParameterID(name, VERSION_HINT_OFFSET + tag), std::forward<Arg>(args)...);
+     par->setAutomatable(false);
+     return par;
+ }
 diff --git a/sources/plugin_version.h b/sources/plugin_version.h
 index ad7b9a3..5b7636e 100644
 --- a/sources/plugin_version.h
