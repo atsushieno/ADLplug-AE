@@ -11,6 +11,7 @@ ADLplug-AE is a modernized builds of [jpcima/ADLplug](https://github.com/jpcima/
   - supports CLAP build.
 - eliminated modal dialogs for Android (for Standalone and AAP plugin).
 - build both ADLplug and OPNplug at a time, without cmake arguments.
+- Added "Dummy" volume model in OPNplug (otherwise "only one enum" parameter causes run-time error)
 
 Everything else is left as is, so far.
 
@@ -26,7 +27,7 @@ After checking out from this git repository, run the following commands:
 ```
 git submodule update --init --recursive # in case you did not
 cd external/ADLplug
-patch -i ../../adlplug-ae.patch -p1
+git apply ../../adlplug-ae.patch
 cd ../..
 cmake -B build # or any name instead of `build`
 cmake --build build # ditto

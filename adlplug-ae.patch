@@ -18,6 +18,19 @@ index a009e6b..c0e590b 100644
          //[/UserButtonCode_btn_emulator]
      }
      else if (buttonThatWasClicked == btn_deep_tremolo.get())
+diff --git a/sources/opn2/parameter_block.cc b/sources/opn2/parameter_block.cc
+index ddb4b6e..3878641 100644
+--- a/sources/opn2/parameter_block.cc
++++ b/sources/opn2/parameter_block.cc
+@@ -129,7 +129,7 @@ void Parameter_Block::setup_parameters(AudioProcessorEx &p)
+         }
+     }
+ 
+-    StringArray volmodel_choices = {"Generic"};
++    StringArray volmodel_choices = {"Generic", "Dummy"};
+     p_volmodel = add_parameter<Pt::Choice>(p, 'glob', "volmodel", "Volume model", volmodel_choices, wopn->volume_model, String());
+     p_lfoenable = add_parameter<Pt::Bool>(p, 'glob', "lfoenable", "LFO enable", (wopn->lfo_freq & 8) != 0, String());
+     StringArray lfofreq_choices = {"3.98 Hz", "5.56 Hz", "6.02 Hz", "6.37 Hz", "6.88 Hz", "9.63 Hz", "48.1 Hz", "72.2 Hz"};
 diff --git a/sources/opn2/ui/main_component.cc b/sources/opn2/ui/main_component.cc
 index 7105b40..691dfba 100644
 --- a/sources/opn2/ui/main_component.cc
