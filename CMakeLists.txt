@@ -155,8 +155,6 @@ target_include_directories(${BaseTargetName}
         external/ADLplug/sources
         )
 
-juce_generate_juce_header(${BaseTargetName})
-
 # chip-specifics (had to specify here after all...)
 
 if (${ADLplug_CHIP} STREQUAL "OPL3")
