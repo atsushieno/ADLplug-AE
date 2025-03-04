@@ -35,6 +35,16 @@ cmake --build build # ditto
 
 ... and the build artifacts would show up under `build` (or whatever you specified). The build artifacts would be dependent on each platform.
 
+### Building on MacOS 15 (Sequoia) or later
+
+JUCE 7.0.12 has a known problem that it uses `CGWindowListCreateImage()` which
+is obsoleted and unavailable in macOS 15.0:
+
+>  error: 'CGWindowListCreateImage' is unavailable:
+>  obsoleted in macOS 15.0 - Please use ScreenCaptureKit instead.
+
+You will have to either switch to JUCE8, or manually remove uses of this API.
+
 ## LICENSES
 
 ADLplug-AE is released under the GPLv3 license.
