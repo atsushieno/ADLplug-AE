@@ -575,3 +575,13 @@ index 61b860d..f6e70c7 100644
  }
  
  template <class T>
+diff --git a/sources/JuceHeader.h b/sources/JuceHeader.h
+new file mode 100644
+index 0000000..a112f79
+--- /dev/null
++++ b/sources/JuceHeader.h
+@@ -0,0 +1,4 @@
++// It is a dummy header file.
++#include <juce_audio_processors/juce_audio_processors.h>
++#include <juce_audio_utils/juce_audio_utils.h>
++using namespace juce;
