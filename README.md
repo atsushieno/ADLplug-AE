@@ -4,7 +4,7 @@
 
 ADLplug-AE is a modernized builds of [jpcima/ADLplug](https://github.com/jpcima/ADLplug/), namely:
 
-- based on JUCE7.
+- based on JUCE8.
 - revamped CMake build script so that we can easily integrate others'
   JUCE efforts that work well with the official JUCE CMake scripts.
   - supports LV2 in JUCE7 way (uses LV2 Patch and Atom for parameters)
@@ -34,16 +34,6 @@ cmake --build build # ditto
 ```
 
 ... and the build artifacts would show up under `build` (or whatever you specified). The build artifacts would be dependent on each platform.
-
-### Building on MacOS 15 (Sequoia) or later
-
-JUCE 7.0.12 has a known problem that it uses `CGWindowListCreateImage()` which
-is obsoleted and unavailable in macOS 15.0:
-
->  error: 'CGWindowListCreateImage' is unavailable:
->  obsoleted in macOS 15.0 - Please use ScreenCaptureKit instead.
-
-You will have to either switch to JUCE8, or manually remove uses of this API.
 
 ## LICENSES
 
